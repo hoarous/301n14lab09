@@ -239,11 +239,11 @@ let lookupEvents = (location) =>{
 
 function searchEventsEventbrite(req, res){
   const api_url = `https://www.eventbriteapi.com/v3/events/search?token=${process.env.EVENTBRITE_API_KEY}&location.address=${req.query.data.search_query}`;
-
+  
+  console.log(api_url)
   return superagent.get(api_url)
 
     .then(result => {
-
       let eventSummaries = result.body.events.map((event) => {
        return new Event(event);  //create new Event object and push it to Event Summaries
 
