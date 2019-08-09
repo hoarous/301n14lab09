@@ -1,8 +1,8 @@
 
 # City-explorer
 
-**Author**: Anastasia Lebedeva, Aaron Imbrock
-**Version**: 1.0.3 
+**Author**: Anastasia Lebedeva, Aaron Imbrock, Mae-mae Zhou, Ahren Swett
+**Version**: 1.0.4 
 
 ## Overview
 This app converts a location entered by the user into a latitude and longitude, then use those values to request weather information for that location and information from Evenbrite website. 
@@ -22,57 +22,38 @@ Java Script, Express, Dotenv, Superagent, Cors for the backend
 
 ## Change Log
 
-# Feature #1: Data formatting
-***
-## As a user, I want the application to provide properly formatted data so that I can view similar data for any location I choose. NOTE: Do this first with the mock data before refactoring to an API call.
-***
-* Estimate of time needed to complete: **1 hour**
-* Start time: **6:30pm**
-* Finish time: **7:00**
-* Actual time needed to complete: **30 minutes**
+##Feature 1: Movies
+Estimate of time needed to complete: _____
 
-## **Driver: Anna ** 
-## **Navigator: Aaron** 
-***
+Start time: _____
 
-# Feature #2:
-***
-##  Locations: As a user, I want to enter the name of a location so that I do not need to look up the latitude and longitude every time I learn about a new location.
-***
-* Estimate of time needed to complete: **2hour**
-* Start time: **7:00pm**
-* Finish time: **9:00pm**
-* Actual time needed to complete: **2hours**
+Finish time: _____
 
-## **Driver: Anna ** 
-## **Navigator: Aaron** 
-***
+Actual time needed to complete: _____
 
-# Feature #3:
-***
-## Weather: As a user, I want to request current weather information so that I can learn more about the typical weather patterns in the location.
-***
-* Estimate of time needed to complete: **2hours**
-* Start time: ** **
-* Finish time: ** **
-* Actual time needed to complete: ** **
+##Feature 2: Yelp
+Estimate of time needed to complete: _____
 
-## **Driver:** 
-## **Navigator:** 
-***
+Start time: _____
 
-# Feature #4:
-***
-## EventBrite: As a user, I want to request information about events in the area so that users can learn about what is taking place in the location.
-***
-* Estimate of time needed to complete: ** 1hour**
-* Start time: ** **
-* Finish time: ** **
-* Actual time needed to complete: ** **
+Finish time: _____
 
-## **Driver:** 
-## **Navigator:** 
-***
+Actual time needed to complete: _____
 
+##Feature 3: Cache Invalidation
+Estimate of time needed to complete: _____
 
+Start time: _____
 
+Finish time: _____
+
+Actual time needed to complete: _____
+
+##Feature 4: Trails
+Estimate of time needed to complete: _____
+
+Start time: _____
+
+Finish time: _____
+
+Actual time needed to complete: _____
