@@ -322,15 +322,15 @@ let lookupYelp = (location) =>{
 };
 
 function searchYelp(req, res){
-  const api_url = ``; //TODO: find api path
+  const api_url = `https://api.yelp.com/v3/businesses/search?location=${req.query.data.search_query}&sort_by=rating&limit=20`;
 
   return superagent
-    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
     .get(api_url)
-
+    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
+    
     .then(result => {
 
-      let restaurants = result.body.map((restaurant) => { //TODO: find actual structure of return data
+      let restaurants = result.body.businesses.map((restaurant) => {
        return new Restaurant(restaurant); //create new Restaurant object and push it to Yelp Summaries
 
       });
@@ -346,8 +346,8 @@ function searchYelp(req, res){
 }
 
 function cacheYelp(restaurant, id){
-  let SQL = 'INSERT INTO events (name, image_url, price, rating, url) VALUES ($1, $2, $3, $4, $5)';
-  const values = [restaurant.name, restaurant.image_url, restaurant.price, restaurant.rating, restaurant.url];
+  let SQL = 'INSERT INTO events (name, image_url, price, rating, url, location_id) VALUES ($1, $2, $3, $4, $5, $6)';
+  const values = [restaurant.name, restaurant.image_url, restaurant.price, restaurant.rating, restaurant.url, id];
 
   return client.query(SQL, values)
     .then (result => console.log(`restaurant location id ${id} and result ${result} inserted `));

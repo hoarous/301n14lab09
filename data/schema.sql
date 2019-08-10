@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS yelp (
 id SERIAL PRIMARY KEY,
 name  VARCHAR(255), 
 image_url VARCHAR(500),
-price VARCHAR(6);
-rating VARCHAR(6);
-url VARCHAR(500);
+price VARCHAR(6),
+rating NUMERIC(3,2),
+url VARCHAR(500),
+location_id INTEGER
 );
