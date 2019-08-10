@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS locations, weather, events;
+DROP TABLE IF EXISTS locations, weather, events, yelp;
 
 
 CREATE TABLE IF NOT EXISTS locations (
@@ -22,5 +22,15 @@ link VARCHAR(500),
 name VARCHAR(255),
 event_date VARCHAR(255),
 summary VARCHAR(255),
+location_id INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS yelp (
+id SERIAL PRIMARY KEY,
+name  VARCHAR(255), 
+image_url VARCHAR(500),
+price VARCHAR(6),
+rating NUMERIC(3,2),
+url VARCHAR(500),
 location_id INTEGER
 );
