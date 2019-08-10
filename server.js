@@ -34,6 +34,7 @@ let city;
 app.get('/location', getLocation);
 app.get('/weather', getWeather);
 app.get('/events', getEvents);
+app.get('/yelp', getYelp);
 
 //============================== Location Feature ==========================================================//
 
@@ -279,6 +280,90 @@ function Event(data){
 //=============================================================================================================//
 
 
+
+//==================================YELP feature===========================================================================//
+// route to handle user request and send the response from our database or YELP
+function getYelp(req, res){
+  lookupYelp(req.query.data)
+    .then(location => {
+
+      if (location){
+        //if exists send the object as response
+        res.send(location);
+        console.log ('yelp db data used');
+      }
+
+      //if doesn't exists go to go to Yelp api
+      else
+      {//req.query.data gives us
+        searchYelp(req, res)
+           .then(location =>{
+             console.log('Yelp DATA used');
+             res.send(location);
+
+
+        });
+      }
+    });
+}
+
+//check if data from events SQL DB contains requested location
+let lookupYelp = (location) =>{
+  let SQL = 'SELECT * FROM yelp WHERE location_id=$1';
+  let values = [location.id];
+  return client.query(SQL, values)
+    .then(result => {
+      if (result.rowCount > 0){
+        // if so return location data
+        return result.rows;
+
+      }
+    });
+};
+
+function searchYelp(req, res){
+  const api_url = ``; //TODO: find api path
+
+  return superagent
+    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
+    .get(api_url)
+
+    .then(result => {
+
+      let restaurants = result.body.map((restaurant) => { //TODO: find actual structure of return data
+       return new Restaurant(restaurant); //create new Restaurant object and push it to Yelp Summaries
+
+      });
+
+      restaurants.forEach((restaurant) => {
+        cacheYelp(restaurant, city.id);
+
+      });
+
+      res.send(restaurants); //send Yelp summaries array as a response
+    });
+
+}
+
+function cacheYelp(restaurant, id){
+  let SQL = 'INSERT INTO events (name, image_url, price, rating, url) VALUES ($1, $2, $3, $4, $5)';
+  const values = [restaurant.name, restaurant.image_url, restaurant.price, restaurant.rating, restaurant.url];
+
+  return client.query(SQL, values)
+    .then (result => console.log(`restaurant location id ${id} and result ${result} inserted `));
+
+}
+
+function Restaurant(data){
+  this.name = data.name.text;
+  this.image_url = data.image_url;
+  this.price = data.price;
+  this.rating = data.rating;
+  this.url = data.url;
+}
+
+
+//=============================================================================================================//
 
 
 
