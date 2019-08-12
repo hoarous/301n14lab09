@@ -34,7 +34,9 @@ let city;
 app.get('/location', getLocation);
 app.get('/weather', getWeather);
 app.get('/events', getEvents);
+// app.get('/movies', getMovies);
 app.get('/yelp', getYelp);
+
 
 //============================== Location Feature ==========================================================//
 
@@ -278,6 +280,57 @@ function Event(data){
 
 
 //=============================================================================================================//
+
+//========================================       Movies        ================================================//
+
+// write a function that takes in a req and res
+function getMovies(req, res){
+  checkSQLforMovies(req.query.data)
+    .then(location =>{
+      console.log(location,'movies');
+      if(location){
+        res.send(location);
+      }else{
+        // get the information from movies
+        searchMovies();
+          .then()
+            // send the info to sql
+            // 
+      }
+      
+    });
+  // call a function to check if in DB
+  // if not get it form movies api
+
+
+}
+//sends the request to movies via superagent
+let searchMovies =(req,res) =>{
+const api_url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${request.query.data.search_query}&include_adult=false&total_results=20`;
+return superagent.get(api_url)
+console
+}
+
+
+let checkSQLforMovies = (location) => {
+    let SQL='SELECT * FROM movies WHERE location_id=$1';
+    let values = [location_id];
+    return client.query(SQL, values)
+    .then(result => {
+      if(result.rowCount > 0){
+        return result.rows;
+      }
+    });
+};
+
+
+
+
+
+
+
+
+
 
 
 
