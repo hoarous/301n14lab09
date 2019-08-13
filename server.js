@@ -10,6 +10,20 @@ const app = express();
 //add cors and superagent
 const cors = require('cors');
 app.use(cors());
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, Content-Length, X-Requested-With'
+  );
+  // intercept OPTIONS method
+  if ('OPTIONS' == req.method) {
+    res.send(200);
+  } else {
+    next();
+  }
+ });
 const superagent = require('superagent');
 
 // configure environment variables
@@ -130,7 +144,7 @@ City.prototype.postLocation = function (){
 
 //route to handle user request and send the response from our database or DarkSky
 function getWeather(req, res){
-  
+
   //check if this lcoation exist in database
   lookupWeather(req.query.data)
     .then(location => {
@@ -164,7 +178,7 @@ function searchWeatherDarksky (req, res){
     .then(weatherDisplay => {
       // let weatherSummaries = [];   ///array to store our days weather summaries
       let weatherSummaries = weatherDisplay.body.daily.data.map((day) => {
-        return new Weather(day);  //create new Weather object and push it to weather Summaries
+        return new Weather(day); //create new Weather object and push it to weather Summaries
       });
 
       weatherSummaries.forEach((day)=>{
@@ -256,10 +270,10 @@ function searchEventsEventbrite(req, res){
   const api_url = `https://www.eventbriteapi.com/v3/events/search?token=${process.env.EVENTBRITE_API_KEY}&location.address=${req.query.data.search_query}`;
 
   return superagent.get(api_url)
-    
+
     .then(result => {
       let eventSummaries = result.body.events.map((event) => {
-       return new Event(event);  //create new Event object and push it to Event Summaries
+       return new Event(event); //create new Event object and push it to Event Summaries
       });
 
       eventSummaries.forEach((event) => {
@@ -308,9 +322,9 @@ function getMovies(req, res){
             res.send(location);
           });
 
-            
+
       }
-      
+
     })
     .catch(error => handleError(error, res));
   // call a function to check if in DB
@@ -431,7 +445,7 @@ function searchYelp(req, res){
       let restaurants = result.body.businesses.map((restaurant) =>{
        return new Restaurant(restaurant); //create new Restaurant object and push it to Yelp Summaries
       });
-      
+
       restaurants.forEach((restaurant) => {
 
         cacheYelp(restaurant, req.query.data.id);
