@@ -23,18 +23,25 @@ const client = new pg.Client(process.env.DATABASE_URL);
 client.connect();
 client.on('error', err => console.error(err));
 
+function handleError(err, res) {
+  console.error('ERR', err);
+  if (res) res.status(500).send('Sorry, something went wrong');
+}
 
 // tell our express server to start listening on port PORT
 app.listen(PORT, () => console.log(`listening on port ${PORT}`));
 
 //variable to store our city/location object
-let city;
+
 //=======================================================================================================//
 
 app.get('/location', getLocation);
 app.get('/weather', getWeather);
 app.get('/events', getEvents);
 app.get('/yelp', getYelp);
+app.get('/movies', getMovies);
+
+
 
 //============================== Location Feature ==========================================================//
 
@@ -86,7 +93,7 @@ function searchToLatLong(query){
 
   //then when we got the data from superagent create a new City object with the query (location name) and data (res.body.results[0]);
     .then(res => {
-      city = new City(query, res.body.results[0]);
+      let city = new City(query, res.body.results[0]);
       ////envoking prototype function to set our object in table
       city.postLocation(query);
       return city;
@@ -143,10 +150,13 @@ function getWeather(req, res){
 
             res.send(location);
 
-          });
+          })
+          .catch(error => handleError(error, res));
       }
-    });
+    })
+    .catch(error => handleError(error, res));
 }
+
 function searchWeatherDarksky (req, res){
   const api_url = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${req.query.data.latitude},${req.query.data.longitude}`;
   return superagent.get(api_url)
@@ -158,11 +168,12 @@ function searchWeatherDarksky (req, res){
       });
 
       weatherSummaries.forEach((day)=>{
-        cacheWeather(day, city.id);
+        cacheWeather(day, req.query.data.id);
       });
 
       res.send(weatherSummaries); //send WeatherSummaries array as a response
-    });
+    })
+    .catch(error => handleError(error, response));
 }
 
 
@@ -192,7 +203,8 @@ let lookupWeather = (location) =>{
         return result.rows;
 
       }
-    });
+    })
+    .catch(error => handleError(error, response));
 };
 
 //=============================================================================================================//
@@ -221,7 +233,8 @@ function getEvents(req, res){
 
         });
       }
-    });
+    })
+    .catch(error => handleError(error, res));
 }
 
 //check if data from events SQL DB contains requested location
@@ -235,29 +248,28 @@ let lookupEvents = (location) =>{
         return result.rows;
 
       }
-    });
+    })
+    .catch(error => handleError(error, res));
 };
 
 function searchEventsEventbrite(req, res){
   const api_url = `https://www.eventbriteapi.com/v3/events/search?token=${process.env.EVENTBRITE_API_KEY}&location.address=${req.query.data.search_query}`;
 
   return superagent.get(api_url)
-
+    
     .then(result => {
-
       let eventSummaries = result.body.events.map((event) => {
        return new Event(event);  //create new Event object and push it to Event Summaries
-
       });
 
       eventSummaries.forEach((event) => {
-        cacheEvents(event, city.id);
+        cacheEvents(event, req.query.data.id);
 
       });
 
       res.send(eventSummaries); //send Eventbrite summaries array as a response
-    });
-
+    })
+    .catch(error => handleError(error, res));
 }
 
 function cacheEvents(event, id){
@@ -278,6 +290,90 @@ function Event(data){
 
 
 //=============================================================================================================//
+
+//========================================       Movies        ================================================//
+
+// write a function that takes in a req and res
+function getMovies(req, res){
+  checkSQLforMovies(req.query.data)
+    .then(location =>{
+      console.log(location,'movies');
+      if(location){
+        res.send(location);
+      }else{
+        // get the information from movies
+        searchMovies(req,res)
+          .then(location =>{
+            // console.log('Movie DATA used');
+            res.send(location);
+          });
+
+            
+      }
+      
+    })
+    .catch(error => handleError(error, res));
+  // call a function to check if in DB
+  // if not get it form movies api
+}
+
+
+function cacheMOVIES(movie, id){
+  let SQL = 'INSERT INTO movies (title, overview, vote_average, vote_count, poster_path, popularity, release_date, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,)';
+  const values = [movie.title, movie.overview, movie.vote_average, movie.vote_count, movie.poster_path, movie.popularity, movie.release_date, id];
+
+  return client.query(SQL, values)
+    .then (result => console.log(`movies location id ${id} and result ${result} inserted `));
+
+}
+
+
+
+//sends the request to movies via superagent
+let searchMovies = (req,res) =>{
+const api_url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${req.query.data.search_query}&include_adult=false&total_results=20`;
+return superagent.get(api_url)
+//  console.log('go go superagent')
+  .then(result =>{
+    // send data recieved through the constructor
+    let movies = result.body.results.map(data => {
+      return new Movie(data);
+    });
+    //send constructed data back to
+    res.send(movies);
+
+    movies.forEach(movie =>{
+      cacheMOVIES(movie, req.query.data.id);
+    });
+
+  })
+  .catch(error => handleError(error, res));
+};
+
+
+let checkSQLforMovies = (location) => {
+    let SQL='SELECT * FROM movies WHERE location_id=$1';
+    let values = [location.id];
+    return client.query(SQL, values)
+    .then(result => {
+      if (result.rowCount > 0){
+        // if so return location data
+        return result.rows;
+      }
+    })
+    .catch(error => handleError(error, res));
+};
+
+
+function Movie(data){
+  this.title = data.title;
+  this.overview = data.overview;
+  this.vote_average = data.vote_average;
+  this.vote_count = data.vote_count;
+  this.poster_path = data.poster_path;
+  this.popularity = data.popularity;
+  this.release_date = data.release_date;
+}
 
 
 
@@ -302,9 +398,11 @@ function getYelp(req, res){
              res.send(location);
 
 
-        });
+        })
+        .catch(error => handleError(error, res));
       }
-    });
+    })
+    .catch(error => handleError(error, res));
 }
 
 //check if data from events SQL DB contains requested location
@@ -318,7 +416,8 @@ let lookupYelp = (location) =>{
         return result.rows;
 
       }
-    });
+    })
+    .catch(error => handleError(error, res));
 };
 
 function searchYelp(req, res){
@@ -327,26 +426,26 @@ function searchYelp(req, res){
   return superagent
     .get(api_url)
     .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
-    
+
     .then(result => {
-
-      let restaurants = result.body.businesses.map((restaurant) => {
+      let restaurants = result.body.businesses.map((restaurant) =>{
        return new Restaurant(restaurant); //create new Restaurant object and push it to Yelp Summaries
-
       });
-
+      
       restaurants.forEach((restaurant) => {
-        cacheYelp(restaurant, city.id);
 
+        cacheYelp(restaurant, req.query.data.id);
       });
+
 
       res.send(restaurants); //send Yelp summaries array as a response
-    });
+    })
+    .catch(error => handleError(error, res));
 
 }
 
 function cacheYelp(restaurant, id){
-  let SQL = 'INSERT INTO events (name, image_url, price, rating, url, location_id) VALUES ($1, $2, $3, $4, $5, $6)';
+  let SQL = 'INSERT INTO yelp (name, image_url, price, rating, url, location_id) VALUES ($1, $2, $3, $4, $5, $6)';
   const values = [restaurant.name, restaurant.image_url, restaurant.price, restaurant.rating, restaurant.url, id];
 
   return client.query(SQL, values)
@@ -355,7 +454,7 @@ function cacheYelp(restaurant, id){
 }
 
 function Restaurant(data){
-  this.name = data.name.text;
+  this.name = data.name;
   this.image_url = data.image_url;
   this.price = data.price;
   this.rating = data.rating;
